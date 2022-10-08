@@ -1,9 +1,16 @@
 -module(app).
 -import(full_network, [generateGrid/4]).
+-import(gossip, [getInitialState/1, updateState/1, shouldTerminate/1]).
 -export([start/3]).
 
-generateGrid(ServerPID, full_network_topology, Algorithm, NodeCount, RumourCount) ->
-  full_network:generateGrid(ServerPID, Algorithm, NodeCount, RumourCount).
+generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount, RumourCount) ->
+  % {ok, RumourCount} = application:get_env(gossip, rumourCount),
+  State = gossip:getInitialState({10}),
+  full_network:generateGrid(
+    ServerPID, 
+    { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1 },
+    NodeCount
+  ).
 
 monitorMetric(NodeCount, Count, Metrics) ->
   if Count == NodeCount -> done;
@@ -20,7 +27,6 @@ monitorMetric(NodeCount, Count, Metrics) ->
 
 start(NodeCount, Topoplogy, Algorithm) ->
   % {ok, W} = application:get_env(gossip, w), % Will be used only in the push-sum algorithm
-  % {ok, RumourCount} = application:get_env(gossip, rumourCount), % Will be used only in the Gossip algorithm
   io:format("Running gossip simulator ~n"),
   io:format("Topoplogy: ~s~n", [Topoplogy]),
   io:format("Algorithm: ~s~n", [Algorithm]),

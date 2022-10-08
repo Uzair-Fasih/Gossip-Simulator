@@ -6,35 +6,38 @@
 % It should have a controller and following methods: Send and Receive
 % On receive the actor should decide whether it is to termintae
 
-loop(ServerPID, RumourCount, CurrCount, Neighbors) ->
-  if CurrCount == 1 ->
-    ServerPID ! {record_metric};
-    true -> pass
-  end,
-
+loop(ServerPID, Algorithm, Neighbors, Init) ->
+  {State, UpdateState, ShouldTerminate} = Algorithm,
   if length(Neighbors) > 0 ->
     lists:nth(rand:uniform(length(Neighbors)), Neighbors) ! {receive_rumour};
     true -> pass
   end,
 
-  if CurrCount > RumourCount; length(Neighbors) == 0 -> 
+  TerminationCondition = ShouldTerminate(State),
+  if TerminationCondition; length(Neighbors) == 0 -> % TerminationCondition mist be update
     [Pid ! {announce_death, self()} || Pid <- Neighbors];
     true ->
       receive
         {receive_rumour} ->
+          
+          if Init == true ->
+            ServerPID ! {record_metric};
+            true -> pass
+          end,
+
           % Send to a random neighbour
           % io:format("~p Received Rumour. Current count: ~p~n", [self(), CurrCount + 1]),
-          loop(ServerPID, RumourCount, CurrCount + 1, Neighbors);
+          loop(ServerPID, {UpdateState(State), UpdateState, ShouldTerminate}, Neighbors, false); % State needs to be updated
 
         {announce_death, Pid} -> 
           RemainingNeighbors = lists:filter(fun (Elem) -> Elem =/= Pid end, Neighbors),
           % io:format("Number of neighbors alive ~p~n", [length(RemainingNeighbors)]),
-          loop(ServerPID, RumourCount, CurrCount, RemainingNeighbors)
+          loop(ServerPID, Algorithm, RemainingNeighbors, Init)
       end
   end.
 
-initialize(ServerPID, RumourCount) ->
+initialize(ServerPID, Algorithm) ->
   receive 
     {register_neighbours, Neighbors} -> 
-      loop(ServerPID, RumourCount, 0, Neighbors)
+      loop(ServerPID, Algorithm, Neighbors, true) % The inital state must be passed by algorithm. State = {RumourCount, 0}
   end.
