@@ -1,10 +1,11 @@
 -module(node).
 -export([initialize/2]).
+
 % Each node on the grid must have the following properties
 % It should maintain it's own state information
 % State information includes knowledge about its neighbors
 % It should have a controller and following methods: Send and Receive
-% On receive the actor should decide whether it is to termintae
+% On receive the actor should decide whether it is to terminate
 
 loop(ServerPID, Algorithm, Neighbors, Init) ->
   {State, UpdateState, ShouldTerminate} = Algorithm,
@@ -15,11 +16,11 @@ loop(ServerPID, Algorithm, Neighbors, Init) ->
 
   TerminationCondition = ShouldTerminate(State),
   if TerminationCondition; length(Neighbors) == 0 -> % TerminationCondition mist be update
+    io:fwrite("DEATH of ~p~n", [self()]),
     [Pid ! {announce_death, self()} || Pid <- Neighbors];
     true ->
       receive
         {receive_rumour} ->
-          
           if Init == true ->
             ServerPID ! {record_metric};
             true -> pass
@@ -38,6 +39,7 @@ loop(ServerPID, Algorithm, Neighbors, Init) ->
 
 initialize(ServerPID, Algorithm) ->
   receive 
-    {register_neighbours, Neighbors} -> 
+    {register_neighbours, Neighbors, Node} ->
+      io:fwrite("Received neighbors from ~p: ~p~n" , [Node, Neighbors]),
       loop(ServerPID, Algorithm, Neighbors, true) % The inital state must be passed by algorithm. State = {RumourCount, 0}
   end.

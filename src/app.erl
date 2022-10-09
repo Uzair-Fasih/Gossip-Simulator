@@ -1,16 +1,31 @@
 -module(app).
 -import(full_network, [generateGrid/4]).
+-import(linear_topology, [generateLinearGrid/4]).
+-import('2d_grid', [generate2dGrid/3]).
 -import(gossip, [getInitialState/1, updateState/1, shouldTerminate/1]).
 -export([start/3]).
 
-generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount, RumourCount) ->
+getAlgorithmParams(Algorithm) ->
+  case(Algorithm) of
+    (gossip_algo) -> State = gossip:getInitialState({10}),
+      UpdateState = fun gossip:updateState/1,
+      TerminateState = fun gossip:shouldTerminate/1,
+      {State, UpdateState, TerminateState};
+    (push_sum) -> pass
+  end.
+  
+
+generateGrid(ServerPID, Topology, Algorithm, NodeCount, RumourCount) ->
   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
-  State = gossip:getInitialState({10}),
-  full_network:generateGrid(
-    ServerPID, 
-    { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1 },
-    NodeCount
-  ).
+  AlgorithmParams = getAlgorithmParams(Algorithm),
+  case(Topology) of
+    (full_network_topology) ->
+      full_network:generateGrid(ServerPID, AlgorithmParams, NodeCount);
+    (linear_topology) -> 
+      linear_topology:generateLinearGrid(ServerPID, AlgorithmParams, NodeCount, true);
+    ('2d_grid') -> 
+      '2d_grid':generate2dGrid(ServerPID, AlgorithmParams, NodeCount)
+    end.
 
 monitorMetric(NodeCount, Count, Metrics) ->
   if Count == NodeCount -> done;
@@ -25,12 +40,14 @@ monitorMetric(NodeCount, Count, Metrics) ->
   end.
 
 
-start(NodeCount, Topoplogy, Algorithm) ->
+start(NodeCount, Topology, Algorithm) ->
   % {ok, W} = application:get_env(gossip, w), % Will be used only in the push-sum algorithm
   io:format("Running gossip simulator ~n"),
-  io:format("Topoplogy: ~s~n", [Topoplogy]),
+  io:format("Topology: ~s~n", [Topology]),
   io:format("Algorithm: ~s~n", [Algorithm]),
   io:format("NodeCount: ~p~n", [NodeCount]),
-  generateGrid(self(), Topoplogy, Algorithm, NodeCount, 10),
+  % case(Topology) of 
+  %   ('2d_topology') -> if 
+  generateGrid(self(), Topology, Algorithm, NodeCount, 10),
   statistics(wall_clock),
   monitorMetric(NodeCount, 0, []).
