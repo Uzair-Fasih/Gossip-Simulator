@@ -3,7 +3,7 @@
 -export([getNeighbors/2]).
 
 enumerate(List) ->
-  {List1, _ } = lists:mapfoldl(fun(T, Acc) -> {{Acc, T}, Acc+1} end, 1, List),
+  {List1, _ } = lists:mapfoldl(fun(T, Acc) -> {{Acc, T}, Acc + 1} end, 1, List),
   List1.
 
 getNeighbors(NodeIdx, Nodes) ->
@@ -11,15 +11,17 @@ getNeighbors(NodeIdx, Nodes) ->
   Neighbors.
 
 % In linear topology, every node can communicate with its adjacent nodes
-generateLinearGrid(ServerPID, Algorithm, NodeCount, StartRumour) ->
+generateLinearGrid(ServerPID, Algorithm, AlgorithmParams, NodeCount) ->
   Nodes = [
-    spawn_link(node, initialize, [ServerPID, Algorithm]) ||
-    _ <- lists:seq(1, NodeCount)
+    {S, spawn_link(node, initialize, [ServerPID, Algorithm, AlgorithmParams])} || 
+    S <- lists:seq(1, NodeCount)
   ],
-  NewNodes = enumerate(Nodes),
-  if StartRumour ->
-    lists:foreach(fun({NodeIdx, NodePID}) -> NodePID ! {register_neighbours, getNeighbors(NodeIdx, NewNodes), NodePID} end, NewNodes),
-    lists:nth(rand:uniform(length(Nodes)), Nodes) ! {receive_rumour};
-    true -> pass
-  end,
+  % NewNodes = enumerate(Nodes),
+  case(Algorithm) of
+    ('gossip_algo') -> lists:foreach(fun({NodeIdx, NodePID}) -> NodePID ! {register_neighbours, getNeighbors(NodeIdx, Nodes), NodePID} end, Nodes),
+      lists:nth(rand:uniform(length(Nodes)), Nodes) ! {receive_rumour};
+    ('push_sum') -> lists:foreach(fun({NodeIdx, NodePID}) -> NodePID ! {register_neighbours, getNeighbors(NodeIdx, Nodes), NodePID, NodeIdx} end, Nodes),
+      lists:nth(rand:uniform(length(Nodes)), Nodes) ! {receive_sum, {rand:uniform(length(Nodes)), 1}}
+
+    end,
   Nodes.

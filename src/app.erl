@@ -1,8 +1,9 @@
 -module(app).
 -import(full_network, [generateGrid/4]).
 -import(linear_topology, [generateLinearGrid/4]).
--import('2d_grid', [generate2dGrid/3]).
+-import('2d_grid', [generate2dGrid/4]).
 -import(gossip, [getInitialState/1, updateState/1, shouldTerminate/1]).
+-import(push_sum, [setInitialState/1, updatePState/1, shouldTerminatePS/1]).
 -export([start/3]).
 
 getAlgorithmParams(Algorithm) ->
@@ -11,7 +12,10 @@ getAlgorithmParams(Algorithm) ->
       UpdateState = fun gossip:updateState/1,
       TerminateState = fun gossip:shouldTerminate/1,
       {State, UpdateState, TerminateState};
-    (push_sum) -> pass
+    (push_sum) -> State = fun push_sum:setInitialState/1,
+      UpdateState = fun push_sum:updatePState/1,
+      TerminateState = fun push_sum:shouldTerminatePS/1,
+      {State, UpdateState, TerminateState}
   end.
   
 
@@ -20,11 +24,11 @@ generateGrid(ServerPID, Topology, Algorithm, NodeCount, RumourCount) ->
   AlgorithmParams = getAlgorithmParams(Algorithm),
   case(Topology) of
     (full_network_topology) ->
-      full_network:generateGrid(ServerPID, AlgorithmParams, NodeCount);
+      full_network:generateGrid(ServerPID, Algorithm, AlgorithmParams, NodeCount);
     (linear_topology) -> 
-      linear_topology:generateLinearGrid(ServerPID, AlgorithmParams, NodeCount, true);
+      linear_topology:generateLinearGrid(ServerPID, Algorithm, AlgorithmParams, NodeCount);
     ('2d_grid') -> 
-      '2d_grid':generate2dGrid(ServerPID, AlgorithmParams, NodeCount)
+      '2d_grid':generate2dGrid(ServerPID, Algorithm, AlgorithmParams, NodeCount)
     end.
 
 monitorMetric(NodeCount, Count, Metrics) ->
@@ -46,8 +50,6 @@ start(NodeCount, Topology, Algorithm) ->
   io:format("Topology: ~s~n", [Topology]),
   io:format("Algorithm: ~s~n", [Algorithm]),
   io:format("NodeCount: ~p~n", [NodeCount]),
-  % case(Topology) of 
-  %   ('2d_topology') -> if 
   generateGrid(self(), Topology, Algorithm, NodeCount, 10),
   statistics(wall_clock),
   monitorMetric(NodeCount, 0, []).
