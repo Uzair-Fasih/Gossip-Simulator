@@ -16,7 +16,7 @@ loop(ServerPID, Algorithm, Neighbors, Init) ->
   TerminationCondition = ShouldTerminate(NewState),
   if TerminationCondition; length(Neighbors) == 0 ->
     [Pid ! {announce_death, self()} || Pid <- Neighbors];
-    true ->
+    true -> 
       receive
         {receive_rumour, ReceivedData} ->
           if Init == true ->

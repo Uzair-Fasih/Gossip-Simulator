@@ -1,11 +1,11 @@
--module(imperfect_3d_grid).
+-module('imperfect_3d_grid').
 -export([generateGrid/4]).
 
 % In full network, every node can communicate with every other node
 generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
   Rows = trunc(math:floor(math:sqrt(NodeCount))),
   Cols = Rows + (NodeCount rem Rows),
-    {GetInitialState, UpdateState, ShouldTerminate, GetRumourData, GetStateData, GetSettledState} = Algorithm,
+  {GetInitialState, UpdateState, ShouldTerminate, GetRumourData, GetStateData, GetSettledState} = Algorithm,
 
   io:format("Generating a 3d grid of rows: ~p and columns: ~p~n", [Rows, Cols]),
   

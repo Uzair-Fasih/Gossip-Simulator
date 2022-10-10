@@ -1,10 +1,6 @@
-Run the project
 ```bash
-> erl -make
-> erl -pa ebin
-> app:start(5000, full_network_topology, gossip_algo).
-> app:start(10, full_network_topology, push_sum_algo).
-
-> app:start(16, imperfect_3d_grid, gossip_algo).
-> app:start(16, imperfect_3d_grid, push_sum_algo).
+> app:start(100,imperfect_3d_grid, gossip_algo).
+> app:start(100, full_network_topology, gossip_algo).
+> app:start(1000, '2d_topology', gossip_algo).
+> app:start(1000, linear_topology, gossip_algo).
 ```
