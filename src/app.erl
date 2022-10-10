@@ -1,5 +1,5 @@
 -module(app).
--export([start/3]).
+-export([start/3, performanceMonitor/3, aggregateMetrics/3]).
 
 % ---------------- Full Network Topology ---------------- 
 generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount) ->
@@ -66,25 +66,36 @@ generateGrid(ServerPID, imperfect_3d_grid, push_sum_algo, NodeCount) ->
     pass
   ).
 
-monitorMetric(NodeCount, Count, Metrics) ->
-  if Count == NodeCount -> done;
-  true ->
-    receive
-      {record_metric} ->
-        {Time, _} = statistics(wall_clock),
-        ElapsedTime = Time * 1000,
-        io:format("Nodes covered: ~p, Time Elaspsed: ~p~n", [Count + 1, ElapsedTime]),
-        monitorMetric(NodeCount, Count + 1, lists:append(Metrics, [{ Count + 1, ElapsedTime }]))
-    end
+aggregateMetrics(NodeCount, Count, ElaspedTime) -> 
+  receive
+    {record_metric} ->
+      {Time, _} = statistics(wall_clock),
+      aggregateMetrics(NodeCount, Count + 1, Time);
+    {request_metric, ProcessPID} ->
+      ProcessPID ! {metric, Count, ElaspedTime},
+      aggregateMetrics(NodeCount, Count, ElaspedTime);
+    {shutdown} -> done
   end.
 
+% Performance Monitor prints metrics to the screen after every 10s
+performanceMonitor(ServerPID, PerformanceInterval, NodeCount) ->
+  timer:sleep(PerformanceInterval * 1000),
+  ServerPID ! {request_metric, self()},
+  receive
+    {metric, Count, Time} ->
+      io:format("Nodes Covered: ~p, Time Elapsed: ~p~n", [Count, Time * 1000]),
+      if Count == NodeCount -> ServerPID ! {shutdown}, io:format("Done~n");
+        true -> performanceMonitor(ServerPID, PerformanceInterval, NodeCount)
+      end
+  end.
 
 start(NodeCount, Topoplogy, Algorithm) ->
   % {ok, W} = application:get_env(gossip, w), % Will be used only in the push-sum algorithm
   io:format("Running gossip simulator ~n"),
   io:format("Topoplogy: ~s~n", [Topoplogy]),
   io:format("Algorithm: ~s~n", [Algorithm]),
-  io:format("NodeCount: ~p~n", [NodeCount]),
-  statistics(wall_clock),
-  generateGrid(self(), Topoplogy, Algorithm, NodeCount),
-  monitorMetric(NodeCount, 0, []).
+  io:format("NodeCount: ~p~n~n", [NodeCount]),
+  SupervisorID = spawn(?MODULE, aggregateMetrics, [NodeCount, 0, 0]),
+  generateGrid(SupervisorID, Topoplogy, Algorithm, NodeCount),
+  spawn(?MODULE, performanceMonitor, [SupervisorID, 1, NodeCount]),
+  io:format("Nodes Covered: ~p, Time Elapsed: ~p~n", [0, 0]).
