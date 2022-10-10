@@ -79,7 +79,7 @@ aggregateMetrics(NodeCount, Count, ElaspedTime) ->
 
 % Performance Monitor prints metrics to the screen after every 10s
 performanceMonitor(ServerPID, PerformanceInterval, NodeCount) ->
-  timer:sleep(PerformanceInterval * 1000),
+  timer:sleep(PerformanceInterval),
   ServerPID ! {request_metric, self()},
   receive
     {metric, Count, Time} ->
@@ -97,5 +97,5 @@ start(NodeCount, Topoplogy, Algorithm) ->
   io:format("NodeCount: ~p~n~n", [NodeCount]),
   SupervisorID = spawn(?MODULE, aggregateMetrics, [NodeCount, 0, 0]),
   generateGrid(SupervisorID, Topoplogy, Algorithm, NodeCount),
-  spawn(?MODULE, performanceMonitor, [SupervisorID, 1, NodeCount]),
+  spawn(?MODULE, performanceMonitor, [SupervisorID, 500, NodeCount]),
   io:format("Nodes Covered: ~p, Time Elapsed: ~p~n", [0, 0]).
