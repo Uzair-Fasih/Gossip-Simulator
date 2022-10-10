@@ -1,26 +1,48 @@
 -module(app).
--import(gossip, [getInitialState/1, updateState/1, shouldTerminate/1]).
 -export([start/3]).
 
 % Full Network Topology
-generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount, RumourCount) ->
+generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount) ->
   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
-  State = gossip:getInitialState({10}),
   full_network:generateGrid(
     ServerPID, 
-    { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1 },
-    NodeCount
+    { 
+      fun gossip:getInitialState/2,
+      fun gossip:updateState/2, 
+      fun gossip:shouldTerminate/1, 
+      fun gossip:getRumourData/1,
+      fun gossip:getStateData/1,
+      fun gossip:getSettledState/2
+    },
+    NodeCount,
+    { 10 }
   );
 
-% Imperfect 3D Grid Topology
-generateGrid(ServerPID, imperfect_3d_grid, gossip_algo, NodeCount, RumourCount) ->
+generateGrid(ServerPID, full_network_topology, push_sum_algo, NodeCount) ->
   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
-  State = gossip:getInitialState({10}),
-  imperfect_3d_grid:generateGrid(
+  full_network:generateGrid(
     ServerPID, 
-    { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1 },
-    NodeCount
+    { 
+      fun push_sum:getInitialState/2, 
+      fun push_sum:updateState/2, 
+      fun push_sum:shouldTerminate/1, 
+      fun push_sum:getRumourData/1,
+      fun push_sum:getStateData/1,
+      fun push_sum:getSettledState/2
+    },
+    NodeCount,
+    pass
   ).
+
+% Imperfect 3D Grid Topology
+% generateGrid(ServerPID, imperfect_3d_grid, gossip_algo, NodeCount, RumourCount) ->
+%   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
+%   State = gossip:getInitialState({10}),
+%   imperfect_3d_grid:generateGrid(
+%     ServerPID, 
+%     { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1, fun gossip:sendRumour/1 },
+%     NodeCount
+%   ).
 
 monitorMetric(NodeCount, Count, Metrics) ->
   if Count == NodeCount -> done;
@@ -41,6 +63,6 @@ start(NodeCount, Topoplogy, Algorithm) ->
   io:format("Topoplogy: ~s~n", [Topoplogy]),
   io:format("Algorithm: ~s~n", [Algorithm]),
   io:format("NodeCount: ~p~n", [NodeCount]),
-  generateGrid(self(), Topoplogy, Algorithm, NodeCount, 10),
   statistics(wall_clock),
+  generateGrid(self(), Topoplogy, Algorithm, NodeCount),
   monitorMetric(NodeCount, 0, []).
