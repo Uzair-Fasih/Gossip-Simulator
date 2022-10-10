@@ -15,17 +15,25 @@ generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
     fun({X, Y, NodePID}) -> 
       Neighbors = lists:foldl(
         fun({NX, NY, NeighborPID}, Neighbors) -> 
-          if X + 1 == NX; X - 1 == NX; Y + 1 == NY; Y - 1 == NY ->
+          XCond = if X + 1 == NX; X - 1 == NX; X == NX -> true;
+            true -> false
+          end,
+          YCond = if Y + 1 == NY; Y - 1 == NY; Y == NY -> true;
+            true -> false
+          end,
+          if XCond, YCond, NeighborPID =/= NodePID->
             [NeighborPID | Neighbors];
             true -> Neighbors
           end 
         end, [], Nodes
       ),
 
-      % TODO: Filter added nodes from Nodes below
-      { _, _, RandomNode} = lists:nth(rand:uniform(length(Nodes)), Nodes),
-
-      NodePID ! { register_neighbours, [RandomNode | Neighbors] }
+      RemainingNodes = lists:filter(fun ({_,_,Elem}) -> not lists:member(Elem, [NodePID, Neighbors]) end, Nodes),
+      if length(RemainingNodes) > 0 -> 
+        { _, _, RandomNode} = lists:nth(rand:uniform(length(RemainingNodes)), RemainingNodes),
+        NodePID ! { register_neighbours, [RandomNode | Neighbors] };
+        true -> NodePID ! { register_neighbours, Neighbors }
+      end
     end, 
     Nodes
   ),

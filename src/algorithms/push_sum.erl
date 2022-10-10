@@ -13,9 +13,10 @@ updateState(State, pass) -> State;
 updateState({S, W, Counter, PrevRatio}, ReceivedData) -> 
   {ReceivedS, ReceivedW, _, _} = ReceivedData,
   
-  NewS = S + trunc(ReceivedS),
-  NewW = W + trunc(ReceivedW),
+  NewS = S + ReceivedS,
+  NewW = W + ReceivedW,
 
+  % io:format("~p ~p ~n", [NewS, NewW]),
   NewRatio = trunc(NewS / NewW),
   
   ShouldUpdateCounter = abs(NewRatio - PrevRatio) < math:pow(10, -10),

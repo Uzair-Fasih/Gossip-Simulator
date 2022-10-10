@@ -1,4 +1,4 @@
-git -module(node).
+-module(node).
 -export([initialize/2]).
 
 loop(ServerPID, Algorithm, Neighbors, Init) ->
