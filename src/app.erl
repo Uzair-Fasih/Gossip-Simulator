@@ -1,7 +1,7 @@
 -module(app).
 -export([start/3]).
 
-% Full Network Topology
+% ---------------- Full Network Topology ---------------- 
 generateGrid(ServerPID, full_network_topology, gossip_algo, NodeCount) ->
   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
   full_network:generateGrid(
@@ -32,17 +32,39 @@ generateGrid(ServerPID, full_network_topology, push_sum_algo, NodeCount) ->
     },
     NodeCount,
     pass
-  ).
+  );
 
-% Imperfect 3D Grid Topology
-% generateGrid(ServerPID, imperfect_3d_grid, gossip_algo, NodeCount, RumourCount) ->
-%   % {ok, RumourCount} = application:get_env(gossip, rumourCount),
-%   State = gossip:getInitialState({10}),
-%   imperfect_3d_grid:generateGrid(
-%     ServerPID, 
-%     { State, fun gossip:updateState/1, fun gossip:shouldTerminate/1, fun gossip:sendRumour/1 },
-%     NodeCount
-%   ).
+% ---------------- Imperfect 3D Grid Topology ---------------- 
+generateGrid(ServerPID, imperfect_3d_grid, gossip_algo, NodeCount) ->
+  % {ok, RumourCount} = application:get_env(gossip, rumourCount),
+  imperfect_3d_grid:generateGrid(
+    ServerPID, 
+    { 
+      fun gossip:getInitialState/2,
+      fun gossip:updateState/2, 
+      fun gossip:shouldTerminate/1, 
+      fun gossip:getRumourData/1,
+      fun gossip:getStateData/1,
+      fun gossip:getSettledState/2
+    },
+    NodeCount,
+    { 10 }
+  );
+
+generateGrid(ServerPID, imperfect_3d_grid, push_sum_algo, NodeCount) ->
+  imperfect_3d_grid:generateGrid(
+    ServerPID, 
+    { 
+      fun push_sum:getInitialState/2,
+      fun push_sum:updateState/2, 
+      fun push_sum:shouldTerminate/1, 
+      fun push_sum:getRumourData/1,
+      fun push_sum:getStateData/1,
+      fun push_sum:getSettledState/2
+    },
+    NodeCount,
+    pass
+  ).
 
 monitorMetric(NodeCount, Count, Metrics) ->
   if Count == NodeCount -> done;
