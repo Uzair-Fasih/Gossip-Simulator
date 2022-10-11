@@ -3,8 +3,8 @@
 
 % In full network, every node can communicate with every other node
 generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
-  Rows = trunc(math:floor(math:sqrt(NodeCount))),
-  Cols = Rows + (NodeCount rem Rows),
+  Rows = trunc(math:ceil(math:sqrt(NodeCount))),
+  Cols = Rows,
   {GetInitialState, UpdateState, ShouldTerminate, GetRumourData, GetStateData, GetSettledState} = Algorithm,
 
   io:format("Generating a 3d grid of rows: ~p and columns: ~p~n", [Rows, Cols]),

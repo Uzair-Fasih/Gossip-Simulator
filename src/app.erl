@@ -60,12 +60,12 @@ performanceMonitor(ServerPID, PerformanceInterval, NodeCount) ->
   end.
 
 start(NodeCount, Topology, Algorithm) ->
-  % {ok, RumourCount} = application:get_env(gossip, rumourCount), % Will be used only in the push-sum algorithm
+  {ok, RumourCount} = application:get_env(gossip, rumourCount), % Will be used only in the push-sum algorithm
   io:format("Running gossip simulator ~n"),
   io:format("Topoplogy: ~s~n", [Topology]),
   io:format("Algorithm: ~s~n", [Algorithm]),
   io:format("NodeCount: ~p~n~n", [NodeCount]),
   SupervisorID = spawn(?MODULE, aggregateMetrics, [0, 0]),
-  ImplementedNodeCount = generateGrid(SupervisorID, Topology, Algorithm, NodeCount, 10),
+  ImplementedNodeCount = generateGrid(SupervisorID, Topology, Algorithm, NodeCount, RumourCount),
   spawn(?MODULE, performanceMonitor, [SupervisorID, 500, ImplementedNodeCount]),
   io:format("Nodes Covered: ~p, Time Elapsed: ~p~n", [0, 0]).

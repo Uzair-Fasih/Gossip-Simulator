@@ -21,29 +21,28 @@ The goal of the project is to use the actor model in erlang and simulate the gos
 
 Run the project
 ```bash
-> erl -make
-> erl -pa ebin
+erl -make
+erl -pa ebin
 ```
 
-4) To start push_sum, run the following:
+4) To start gossip, run the following:
 
 ```bash
-> app:start([no_of_nodes], full_network_topology, push_sum_algo).
-> app:start([no_of_nodes], linear_topology, push_sum_algo).
-> app:start([no_of_nodes], imperfect_3d_grid, push_sum_algo).
-> app:start([no_of_nodes], '2d_topology', push_sum_algo).
-```
-- ```[no_of_nodes]``` is number of nodes.
-
-5) To start gossip, run the following:
-
-```bash
-> erl -make
-> erl -pa ebin
-
+> application:start(gossip).
 > app:start([no_of_nodes], full_network_topology, gossip_algo).
 > app:start([no_of_nodes], linear_topology, gossip_algo).
 > app:start([no_of_nodes], imperfect_3d_grid, gossip_algo).
 > app:start([no_of_nodes], '2d_topology', gossip_algo).
+```
+- ```[no_of_nodes]``` is number of nodes.
+
+5) To start push_sum, run the following:
+
+```bash
+> application:start(gossip).
+> app:start([no_of_nodes], full_network_topology, push_sum_algo).
+> app:start([no_of_nodes], imperfect_3d_grid, push_sum_algo).
+> app:start([no_of_nodes], '2d_topology', push_sum_algo).
+> app:start([no_of_nodes], linear_topology, push_sum_algo).
 ```
 - ```[no_of_nodes]``` is number of nodes.
