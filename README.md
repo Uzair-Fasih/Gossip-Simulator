@@ -9,8 +9,9 @@
 ## Overview
 The goal of the project is to use the actor model in erlang and simulate the gossip algorithm. We have designed our system to work as follows:
 
-## Rubric and Output
+## What is Working?
 
+We were able to implement all the 4 topologoes with both the algorithms.
 
 ## Running the application
 1) Install erlang from https://www.erlang.org/ and clone this repository.
@@ -46,3 +47,25 @@ erl -pa ebin
 > app:start([no_of_nodes], linear_topology, push_sum_algo).
 ```
 - ```[no_of_nodes]``` is number of nodes.
+
+## What is the largest network you managed to deal with for each type of topology and algorithm?
+
+
+### Gossip:
+| Input             | Coin |
+|-------------------|------|
+| Linear            | 4000 |
+| 2D                | 8000 |
+| 3D                | 10000|
+| Full Network      | 12000|
+
+
+### Push Sum:
+| Input             | Coin |
+|-------------------|------|
+| Linear            | 4000 |
+| 2D                | 8000 |
+| 3D                | 10000|
+| Full Network      | 10000|
+
+
