@@ -36,4 +36,4 @@ generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
   {Nodes, GetRumourData} = generateNodes(ServerPID, Algorithm, NodeCount, Config),
   SendRumor = registerNeighbors(RowCount, Nodes),
   SendRumor(GetRumourData),
-  Nodes.
+  length(Nodes).

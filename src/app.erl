@@ -1,5 +1,5 @@
 -module(app).
--export([start/3, performanceMonitor/3, aggregateMetrics/3]).
+-export([start/3, performanceMonitor/3, aggregateMetrics/2]).
 
 getAlgorithmParams(Algorithm, RumourCount) ->
   {AlgorithmParams, Config} = case(Algorithm) of
@@ -36,14 +36,14 @@ generateGrid(ServerPID, Topology, Algorithm, NodeCount, RumourCount) ->
       imperfect_3d_grid:generateGrid(ServerPID, AlgorithmParams, NodeCount, Config)
     end.
 
-aggregateMetrics(NodeCount, Count, ElaspedTime) -> 
+aggregateMetrics(Count, ElaspedTime) -> 
   receive
     {record_metric} ->
-      {_, Time} = statistics(wall_clock),
-      aggregateMetrics(NodeCount, Count + 1, Time);
+      {Time, _} = statistics(wall_clock),
+      aggregateMetrics(Count + 1, Time);
     {request_metric, ProcessPID} ->
       ProcessPID ! {metric, Count, ElaspedTime},
-      aggregateMetrics(NodeCount, Count, ElaspedTime);
+      aggregateMetrics(Count, ElaspedTime);
     {shutdown} -> done
   end.
 
@@ -65,7 +65,7 @@ start(NodeCount, Topology, Algorithm) ->
   io:format("Topoplogy: ~s~n", [Topology]),
   io:format("Algorithm: ~s~n", [Algorithm]),
   io:format("NodeCount: ~p~n~n", [NodeCount]),
-  SupervisorID = spawn(?MODULE, aggregateMetrics, [NodeCount, 0, 0]),
-  generateGrid(SupervisorID, Topology, Algorithm, NodeCount, 10),
-  spawn(?MODULE, performanceMonitor, [SupervisorID, 500, NodeCount]),
+  SupervisorID = spawn(?MODULE, aggregateMetrics, [0, 0]),
+  ImplementedNodeCount = generateGrid(SupervisorID, Topology, Algorithm, NodeCount, 10),
+  spawn(?MODULE, performanceMonitor, [SupervisorID, 500, ImplementedNodeCount]),
   io:format("Nodes Covered: ~p, Time Elapsed: ~p~n", [0, 0]).

@@ -28,7 +28,7 @@ generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
         end, [], Nodes
       ),
 
-      RemainingNodes = lists:filter(fun ({_,_,Elem}) -> not lists:member(Elem, [NodePID, Neighbors]) end, Nodes),
+      RemainingNodes = lists:filter(fun ({_,_,Elem}) -> lists:member(Elem, [NodePID | Neighbors]) end, Nodes),
       if length(RemainingNodes) > 0 -> 
         { _, _, RandomNode} = lists:nth(rand:uniform(length(RemainingNodes)), RemainingNodes),
         NodePID ! { register_neighbours, [RandomNode | Neighbors] };
@@ -40,4 +40,4 @@ generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
 
   { _, _, RandomNode} = lists:nth(rand:uniform(length(Nodes)), Nodes),
   RandomNode ! {receive_rumour, GetRumourData(pass)},
-  Nodes.
+  length(Nodes).

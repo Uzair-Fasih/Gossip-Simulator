@@ -19,4 +19,4 @@ generateGrid(ServerPID, Algorithm, NodeCount, Config) ->
   {_, RandomNode} = lists:nth(rand:uniform(length(Nodes)), Nodes),
   RandomNode ! {receive_rumour, GetRumourData(pass)},
 
-  Nodes.
+  length(Nodes).
